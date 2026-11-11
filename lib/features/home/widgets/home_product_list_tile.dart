@@ -26,7 +26,7 @@ class HomeProductListTile extends StatelessWidget {
           Stack(
             children: [
               AspectRatio(
-                aspectRatio: 0.85,
+                aspectRatio: 1.45,
                 child: AppNetworkImage(
                   url: product.imageUrl,
                   borderRadius: BorderRadius.circular(22),
@@ -58,15 +58,19 @@ class HomeProductListTile extends StatelessWidget {
               Positioned(
                 bottom: 14,
                 right: 14,
-                child: Material(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  child: InkWell(
-                    onTap: onAddCart,
+                child: Semantics(
+                  button: true,
+                  label: 'Add ${product.name} to cart',
+                  child: Material(
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
-                    child: const Padding(
-                      padding: EdgeInsets.all(10),
-                      child: Icon(Icons.shopping_cart_outlined, size: 20),
+                    child: InkWell(
+                      onTap: onAddCart,
+                      borderRadius: BorderRadius.circular(12),
+                      child: const Padding(
+                        padding: EdgeInsets.all(10),
+                        child: Icon(Icons.shopping_cart_outlined, size: 20),
+                      ),
                     ),
                   ),
                 ),
@@ -80,6 +84,8 @@ class HomeProductListTile extends StatelessWidget {
               Expanded(
                 child: Text(
                   product.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.w700,
                     fontSize: 16,

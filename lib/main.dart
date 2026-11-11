@@ -1,3 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart'
     show TargetPlatform, defaultTargetPlatform, kIsWeb;
@@ -30,10 +33,22 @@ Future<bool> _tryInitFirebase() async {
           options: DefaultFirebaseOptions.currentPlatform,
         );
       }
+      if (const bool.fromEnvironment('USE_FIREBASE_EMULATORS')) {
+        if (!Firebase.app().options.projectId.startsWith('demo-')) {
+          throw StateError('Emulator mode requires a demo- project id.');
+        }
+        await FirebaseAuth.instance.useAuthEmulator('127.0.0.1', 9099);
+        FirebaseFirestore.instance.useFirestoreEmulator('127.0.0.1', 8080);
+        FirebaseFirestore.instance.settings = const Settings(
+          persistenceEnabled: false,
+        );
+        FirebaseFunctions.instance.useFunctionsEmulator('127.0.0.1', 5001);
+      }
       return Firebase.apps.isNotEmpty;
     } on PlatformException catch (e, st) {
       debugPrint('Firebase init attempt ${attempt + 1}/$maxAttempts: $e\n$st');
-      final isChannel = e.code == 'channel-error' ||
+      final isChannel =
+          e.code == 'channel-error' ||
           (e.message?.contains('channel') ?? false);
       if (isChannel && attempt < maxAttempts - 1) {
         await Future<void>.delayed(Duration(milliseconds: 300 * (attempt + 1)));
@@ -89,22 +104,13 @@ class AtelierApp extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'We upgraded firebase_core to v4 — run pub get, uninstall '
-                        'the app, then flutter run. If this persists, try a Pixel '
-                        'API 34 emulator with Google Play.',
+                        'The app could not connect. Please check your connection and try again.',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 15,
                           height: 1.45,
                           color: AppColors.textSecondary,
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        'cd android\n.\\gradlew.bat --stop\ncd ..\n'
-                        'flutter clean && flutter pub get && flutter run',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.robotoMono(fontSize: 11),
                       ),
                     ],
                   ),

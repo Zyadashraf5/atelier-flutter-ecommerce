@@ -85,7 +85,7 @@ class HomeView extends GetView<HomeController> {
               body: Align(
                 alignment: Alignment.topCenter,
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 720),
+                  constraints: const BoxConstraints(maxWidth: 1120),
                   child: CustomScrollView(
                     slivers: [
                       SliverPadding(
@@ -160,54 +160,69 @@ class HomeView extends GetView<HomeController> {
                       ),
                       SliverPadding(
                         padding: EdgeInsets.symmetric(horizontal: pad),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate((
-                            context,
-                            index,
-                          ) {
-                            if (catalog.loading) {
-                              return const Padding(
-                                padding: EdgeInsets.all(48),
-                                child: Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                              );
-                            }
-                            if (catalog.errorMessage != null) {
-                              return Padding(
-                                padding: const EdgeInsets.all(24),
-                                child: Text(
-                                  'Could not load catalog.\n${catalog.errorMessage}',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 14,
-                                    color: AppColors.textSecondary,
+                        sliver: SliverLayoutBuilder(
+                          builder: (context, constraints) {
+                            final columns = constraints.crossAxisExtent >= 900
+                                ? 3
+                                : constraints.crossAxisExtent >= 600
+                                ? 2
+                                : 1;
+                            return SliverGrid(
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: columns,
+                                    mainAxisExtent: 340,
+                                    crossAxisSpacing: 24,
+                                    mainAxisSpacing: 8,
                                   ),
-                                ),
-                              );
-                            }
-                            if (c.visibleProducts.isEmpty) {
-                              return Padding(
-                                padding: const EdgeInsets.all(24),
-                                child: Text(
-                                  'No products in this category yet. Add documents '
-                                  'to the Firestore `products` collection.',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 14,
-                                    color: AppColors.textSecondary,
+                              delegate: SliverChildBuilderDelegate((
+                                context,
+                                index,
+                              ) {
+                                if (catalog.loading) {
+                                  return const Padding(
+                                    padding: EdgeInsets.all(48),
+                                    child: Center(
+                                      child: CircularProgressIndicator(),
+                                    ),
+                                  );
+                                }
+                                if (catalog.errorMessage != null) {
+                                  return Padding(
+                                    padding: const EdgeInsets.all(24),
+                                    child: Text(
+                                      'Could not load the collection. Please try again.',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 14,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  );
+                                }
+                                if (c.visibleProducts.isEmpty) {
+                                  return Padding(
+                                    padding: const EdgeInsets.all(24),
+                                    child: Text(
+                                      'No products in this category yet. Try another category.',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 14,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  );
+                                }
+                                final p = c.visibleProducts[index];
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 28),
+                                  child: HomeProductListTile(
+                                    product: p,
+                                    onTap: () => c.openProduct(p),
+                                    onAddCart: () => c.addQuickToCart(p),
                                   ),
-                                ),
-                              );
-                            }
-                            final p = c.visibleProducts[index];
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 28),
-                              child: HomeProductListTile(
-                                product: p,
-                                onTap: () => c.openProduct(p),
-                                onAddCart: () => c.addQuickToCart(p),
-                              ),
+                                );
+                              }, childCount: productListChildCount),
                             );
-                          }, childCount: productListChildCount),
+                          },
                         ),
                       ),
                       const SliverToBoxAdapter(child: SizedBox(height: 88)),

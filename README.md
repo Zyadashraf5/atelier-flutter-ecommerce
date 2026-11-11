@@ -1,97 +1,139 @@
-# Atelier: Flutter e-commerce app with Firebase
+# Atelier · Flutter commerce with trusted checkout
 
 [![CI](https://github.com/Zyadashraf5/atelier-flutter-ecommerce/actions/workflows/ci.yml/badge.svg)](https://github.com/Zyadashraf5/atelier-flutter-ecommerce/actions/workflows/ci.yml)
-![Flutter](https://img.shields.io/badge/Flutter-3.35%2B-02569B?logo=flutter)
-![Firebase](https://img.shields.io/badge/Firebase-Auth%20%7C%20Firestore-FFCA28?logo=firebase&logoColor=black)
 
-A shopping app for a small home-decor store: browse a live catalog, search, add pieces to a cart and place an order that is saved to Cloud Firestore. Built with Flutter, GetX and Firebase, with Firestore security rules that are tested against the emulator in CI.
+A home-decor storefront built with Flutter and Firebase. Browse a live catalog, select products, manage a cart and submit an order. An authenticated Cloud Function recalculates prices from the catalog and atomically reserves stock and saves the order.
 
-**Portfolio demo:** this is not a production payment or order-processing system. Catalog creation is open to signed-in users for demo seeding, and order prices still require authoritative server-side validation.
+**Portfolio scope:** a working commerce prototype with tested authorization and checkout logic. Checkout records an **unpaid** order; it does not charge a payment method. All screenshots use fictional data on local Firebase emulators.
 
-## What the app does
+## Screenshots
 
-| Screen | Behaviour |
-|---|---|
-| Sign up / sign in | Email and password with Firebase Auth. A profile document is written to `users/{uid}` and the session is cached locally. |
-| Home | Live catalog from Firestore (real-time listeners), filtered by category, with quick add-to-cart. |
-| Search | Free-text search plus category chips and trending terms. |
-| Product detail | Image gallery, variants and stock state; out-of-stock pieces cannot be added. |
-| Cart | Lines merge by product and variant; quantities can be changed or removed. |
-| Checkout | Shipping address and payment method selection, then the order is written to Firestore. |
-| Order confirmation | Shows the saved order id and the exact amounts that were stored. |
-| Profile | Account details and sign-out. |
+Real screenshots from the emulator build, including the responsive collection and a completed **unpaid demo order**.
 
-On first sign-in, if the catalog is empty, the app seeds demo categories and products so a fresh Firebase project works immediately. Layouts adapt to phone, tablet and desktop widths (`lib/core/responsive`).
+![Desktop collection](docs/screenshots/home-desktop.png)
 
-## How it is built
+| Mobile collection | Cart |
+|:---:|:---:|
+| <img src="docs/screenshots/home-mobile.png" width="280" alt="Mobile collection" /> | <img src="docs/screenshots/cart-mobile.png" width="280" alt="Cart with fictional product" /> |
 
+<details>
+<summary>Checkout and server-confirmed order</summary>
+
+![Demo checkout](docs/screenshots/checkout-desktop.png)
+![Server-confirmed demo order](docs/screenshots/order-confirmation-desktop.png)
+
+</details>
+
+## What you can review
+
+- **Mobile and wide layouts:** product catalog, search, product detail, cart, checkout and account screens.
+- **Feature-first Flutter:** GetX bindings and controllers, repository boundaries and one client-side pricing policy for the displayed estimate.
+- **Server-owned pricing:** the app sends product ids, quantities and shipping details, never an authoritative price, user id or order status.
+- **Atomic checkout:** stock is checked and decremented in the same Firestore transaction that creates the order. Concurrent shoppers cannot both buy the last item.
+- **Safe retries:** a user-scoped request id returns the same order without decrementing stock twice. Reusing a key with a different payload is rejected.
+- **Read-only client catalog:** only trusted administrative tooling can write products or categories. Customers can read their own orders and profiles.
+
+## Architecture
+
+```mermaid
+flowchart LR
+  UI[Flutter views] --> C[GetX controllers]
+  C --> R[Repositories]
+  R --> A[Firebase Auth]
+  R --> F[Authenticated placeOrder callable]
+  F --> T[Firestore transaction]
+  T --> P[Catalog prices and stock]
+  T --> O[Order and stock reservation]
 ```
-lib/
-├── core/        bindings (DI), constants, pricing rules, responsive helpers, session storage, theme
-├── data/        models (product, category, cart line) and Firebase repositories (auth, orders, profiles)
-├── features/    one folder per screen: binding + controller + view + widgets
-└── routes/      GetX routes
+
+```text
+lib/core/          theme, responsive helpers, pricing estimate, session storage
+lib/data/          models and repositories
+lib/features/      screen-specific bindings, controllers and widgets
+functions/         trusted checkout, validation, unit and integration tests
+firestore-tests/   authorization tests against the Firestore emulator
 ```
 
-- **Feature-first GetX.** Each screen gets its own binding and controller; the cart is a permanent shared controller.
-- **Repositories wrap Firebase.** `AuthRepository`, `OrderRepository` and `UserProfileRepository` accept injected `FirebaseAuth` / `FirebaseFirestore` instances so they can be replaced in tests.
-- **One pricing rule set.** `OrderPricing` (`lib/core/pricing`) owns the tax rate, shipping and rounding to the cent. The cart, the checkout screen and the saved order all use it, so the amounts a customer sees are the amounts stored.
-- **Server-side checks in Firestore rules.** A new order must belong to the signed-in user, start as `processing`, contain at least one line, use the server timestamp and have `total = subtotal + tax` with non-negative amounts. Users can read only their own orders and profiles. Existing catalog documents cannot be updated or deleted by the app, but any signed-in user can create new ones for demo seeding.
+Money is calculated in integer cents on the server. The confirmation screen uses the amounts and line descriptions returned by the server, including when catalog prices have changed since the cart was opened. Tax is a demo policy of 8%; shipping is free.
 
-## Tech stack
+## Run locally without production credentials
 
-Flutter · Dart 3.9 · GetX · Firebase Auth · Cloud Firestore · shared_preferences · google_fonts · Node test runner + `@firebase/rules-unit-testing` · GitHub Actions
-
-## Getting started
-
-Requirements: Flutter 3.35 or newer and a Firebase project with Email/Password sign-in and Cloud Firestore enabled.
+Prerequisites: Flutter stable (tested with 3.47.9), Node 22, Java 21, and Python only if you choose to serve a release web build yourself.
 
 ```bash
 git clone https://github.com/Zyadashraf5/atelier-flutter-ecommerce.git
 cd atelier-flutter-ecommerce
 flutter pub get
+npm --prefix functions ci
+npm --prefix firestore-tests ci
 ```
 
-### Firebase setup
-
-1. Register the Android, iOS and/or Web apps in your Firebase project.
-2. Enable **Email/Password** under Firebase Authentication → Sign-in method.
-3. Copy `firebase.env.example.json` to `firebase.env.json` (ignored by git) and fill in the values from the Firebase console.
-4. Android only: put your `google-services.json` in `android/app/` (ignored by git). The Google Services Gradle plugin is applied only when that file exists.
-5. Deploy the rules: `firebase deploy --only firestore:rules --project <your-project-id>`.
-
-### Run
+Start the emulators in one terminal:
 
 ```bash
-flutter run --dart-define-from-file=firebase.env.json
+firestore-tests/node_modules/.bin/firebase emulators:start --only auth,firestore,functions --project demo-atelier
 ```
 
-## Tests and CI
+On Windows, use `firestore-tests/node_modules/.bin/firebase.cmd`.
+
+In a second terminal, seed fictional products and a demo shopper. Bash:
 
 ```bash
-flutter test                                   # Dart unit & widget tests
-
-# Firestore rules (needs Node 20+ and Java 21)
-npm --prefix firestore-tests install
-firestore-tests/node_modules/.bin/firebase emulators:exec --only firestore --project demo-atelier "npm --prefix firestore-tests test"
+GCLOUD_PROJECT=demo-atelier FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 npm --prefix functions run seed:demo
 ```
 
-| Suite | What it covers |
+PowerShell:
+
+```powershell
+$env:GCLOUD_PROJECT = 'demo-atelier'
+$env:FIRESTORE_EMULATOR_HOST = '127.0.0.1:8080'
+$env:FIREBASE_AUTH_EMULATOR_HOST = '127.0.0.1:9099'
+npm --prefix functions run seed:demo
+```
+
+Then:
+
+```bash
+flutter run -d chrome --dart-define-from-file=firebase.demo.json
+```
+
+Public demo credentials: **demo@example.com / demo-only-password**. These are fictional emulator credentials, not production access. The seed tool refuses real project ids and non-loopback emulator hosts. Emulator routing in the app is opt-in and requires a `demo-` project id. No real project identifiers are included.
+
+## Tests
+
+```bash
+flutter analyze
+flutter test
+npm --prefix functions test
+firestore-tests/node_modules/.bin/firebase emulators:exec --only auth,firestore,functions --project demo-atelier "npm --prefix functions run test:integration && npm --prefix firestore-tests test"
+```
+
+| Suite | Coverage |
 |---|---|
-| `test/cart_and_pricing_test.dart` | Cart line merging, quantity rules, out-of-range indexes, tax/shipping/total rounding |
-| `test/widget_test.dart` | App starts on the splash screen with mocked Firebase |
-| `firestore-tests/orders.rules.test.mjs` | Order ownership, totals, status, empty orders, server timestamps, read isolation; read-only catalog; private profiles |
+| Flutter · 10 tests | Cart merging and quantities, tax/shipping rounding, app startup |
+| Checkout unit · 15 tests | Forged totals and user ids, malformed quantities, missing products, stock aggregated across variants, money and retry identities |
+| Checkout integration · 8 tests | Real Firestore transactions, retries, concurrent stock contention, rollback, anonymous rejection and authenticated HTTP callable |
+| Firestore rules · 11 tests | Direct order writes denied, catalog create/update/delete denied, private orders and profiles, privileged profile fields denied |
 
-GitHub Actions runs `flutter analyze`, `flutter test` and the rules tests (Firestore emulator) on every push and pull request.
+CI runs all suites, strict Flutter analysis and a release web compilation. No production Firebase project is needed for CI.
 
-## Known limitations
+## Connecting your own Firebase project
 
-- **No real payments.** Checkout records the chosen payment method; no payment provider is integrated.
-- **Prices come from the client.** The rules check that the totals are consistent, but not that each line's price matches the catalog. A Cloud Function that recalculates the order on the server is the production fix.
-- **Demo catalog seeding.** Any signed-in user may create (not edit) categories and products so a new project can seed itself; this should be restricted to admins in production.
-- Social sign-in buttons and some profile menu entries are placeholders.
-- Product photos are loaded from Unsplash URLs.
+Register your apps, enable Email/Password sign-in, and fill an ignored `firebase.env.json` from `firebase.env.example.json`. Supply `google-services.json` locally for Android. Deploy the reviewed rules and `placeOrder` function together using your own project configuration. Populate the catalog through trusted administrative tooling; shoppers can no longer seed it.
+
+Never deploy the demo project or use demo credentials in production. This repository does not change or deploy the original application's Firebase services.
+
+## Production work still required
+
+- Integrate a real payment provider and verified payment webhooks before marking anything paid.
+- Add reservation expiry/cancellation and corresponding stock release; current orders reserve stock immediately.
+- Configure App Check, operational quotas, monitoring and a reviewed tax/shipping policy for the target market.
+- Social sign-in and some profile-menu actions remain placeholders. Only the email/password authentication flow is implemented.
+- Android/iOS native builds and real-device behavior require their platform toolchains and your Firebase registrations.
+- Demo photos are loaded from external Unsplash URLs; the app is not a fully offline storefront.
 
 ## Author
 
-**Zyad Ashraf**, Flutter developer · [LinkedIn](https://www.linkedin.com/in/zyad-ashraf-flutter) · [Upwork](https://www.upwork.com/freelancers/~01f783ee63786311ea)
+**Zyad Ashraf** · Flutter developer · [LinkedIn](https://www.linkedin.com/in/zyad-ashraf-flutter) · [Upwork](https://www.upwork.com/freelancers/~01f783ee63786311ea)
+
+On Windows, Flutter may require Developer Mode for native plugin symlinks. No real payments or production-service access are needed for the local web demonstration.

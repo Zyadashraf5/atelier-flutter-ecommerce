@@ -1,3 +1,6 @@
+import 'package:cloud_functions/cloud_functions.dart';
+import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -29,6 +32,8 @@ class CheckoutController extends GetxController {
 
   int paymentMethod = 0;
   bool submitting = false;
+  String? _pendingRequestId;
+  String? _pendingPayload;
 
   double get subtotal =>
       CartController.to.lines.isEmpty ? 0.0 : CartController.to.subtotal;
@@ -49,6 +54,7 @@ class CheckoutController extends GetxController {
   void completePurchaseFab() => submitOrder();
 
   Future<void> submitOrder() async {
+    if (submitting) return;
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       Get.snackbar(
@@ -67,27 +73,29 @@ class CheckoutController extends GetxController {
     try {
       final cart = CartController.to;
       final lines = List<CartLine>.from(cart.lines);
-      final sub = cart.subtotal;
-      final taxAmt = cart.tax;
-      final ship = cart.shipping;
-      final tot = cart.total;
-
-      final itemPayload = lines
-          .map(
-            (l) => {
-              'title': l.product.name,
-              'subtitle': l.variantLabel.isEmpty
-                  ? l.product.subtitle
-                  : l.variantLabel,
-              'price': l.lineTotal,
-              'imageUrl': l.product.imageUrl,
-            },
-          )
-          .toList();
-
       final orderRepo = Get.find<OrderRepository>();
-      final id = await orderRepo.createOrder(
-        userId: user.uid,
+      final payload = jsonEncode({
+        'lines': lines
+            .map((l) => [l.product.id, l.quantity, l.variantLabel])
+            .toList(),
+        'address': [
+          nameCtrl.text.trim(),
+          streetCtrl.text.trim(),
+          cityCtrl.text.trim(),
+          postalCtrl.text.trim(),
+          phoneCtrl.text.trim(),
+        ],
+        'payment': paymentMethod,
+      });
+      if (_pendingPayload != payload) {
+        _pendingRequestId = FirebaseFirestore.instance
+            .collection('orders')
+            .doc()
+            .id;
+        _pendingPayload = payload;
+      }
+      final saved = await orderRepo.createOrder(
+        requestId: _pendingRequestId!,
         lines: lines,
         fullName: nameCtrl.text.trim(),
         street: streetCtrl.text.trim(),
@@ -95,26 +103,31 @@ class CheckoutController extends GetxController {
         postal: postalCtrl.text.trim(),
         phone: phoneCtrl.text.trim(),
         paymentMethodIndex: paymentMethod,
-        subtotal: sub,
-        tax: taxAmt,
-        total: tot,
       );
 
       cart.clear();
+      _pendingRequestId = null;
+      _pendingPayload = null;
 
       Get.offNamed(
         AppRoutes.orderConfirmation,
         arguments: {
-          'orderId': id,
-          'subtotal': sub,
-          'shipping': ship,
-          'tax': taxAmt,
-          'total': tot,
-          'items': itemPayload,
+          'orderId': saved.id,
+          'subtotal': saved.subtotal,
+          'shipping': saved.shipping,
+          'tax': saved.tax,
+          'total': saved.total,
+          'items': saved.items,
+          'shippingAddress': saved.shippingAddress,
         },
       );
-    } catch (e) {
-      Get.snackbar('Checkout failed', e.toString());
+    } on FirebaseFunctionsException catch (e) {
+      Get.snackbar('Could not place order', e.message ?? 'Please try again.');
+    } catch (_) {
+      Get.snackbar(
+        'Could not place order',
+        'Please check your connection and try again.',
+      );
     } finally {
       submitting = false;
       update();

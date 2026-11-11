@@ -3,7 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mine_ecommerce/core/constants/app_colors.dart';
 
 class OrderConfirmationDeliverySection extends StatelessWidget {
-  const OrderConfirmationDeliverySection({super.key});
+  const OrderConfirmationDeliverySection({super.key, required this.address});
+  final Map<String, String> address;
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +20,7 @@ class OrderConfirmationDeliverySection extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              'ESTIMATED DELIVERY',
+              'SHIPPING ADDRESS',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
@@ -48,7 +49,7 @@ class OrderConfirmationDeliverySection extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Alex Thompson',
+                address['fullName'] ?? '',
                 style: GoogleFonts.plusJakartaSans(
                   fontWeight: FontWeight.w800,
                   fontSize: 16,
@@ -56,7 +57,11 @@ class OrderConfirmationDeliverySection extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                '221B Baker Street, London\nUnited Kingdom',
+                [
+                  address['street'],
+                  address['city'],
+                  address['postal'],
+                ].whereType<String>().join(', '),
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
                   height: 1.4,
@@ -65,14 +70,14 @@ class OrderConfirmationDeliverySection extends StatelessWidget {
               ),
               const SizedBox(height: 14),
               Text(
-                'Tuesday, Oct 24',
+                'Delivery timing is confirmed separately.',
                 style: GoogleFonts.plusJakartaSans(
                   fontWeight: FontWeight.w800,
                   color: const Color(0xFF1A2B5E),
                 ),
               ),
               Text(
-                'Via Atelier Express',
+                'Demo order · payment not collected',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
                   color: AppColors.textMuted,

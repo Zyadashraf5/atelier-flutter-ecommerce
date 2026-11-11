@@ -2,7 +2,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mine_ecommerce/core/services/session_storage.dart';
-import 'package:mine_ecommerce/data/firestore/firestore_seeder.dart';
 import 'package:mine_ecommerce/data/repositories/auth_repository.dart';
 import 'package:mine_ecommerce/routes/app_routes.dart';
 
@@ -48,7 +47,6 @@ class LoginController extends GetxController {
       );
       final u = cred.user!;
       await _session.saveSession(uid: u.uid, email: u.email ?? '');
-      await FirestoreSeeder.ensureCatalogReady();
       Get.offAllNamed(AppRoutes.home);
     } on FirebaseAuthException catch (e) {
       Get.snackbar('Sign in failed', e.message ?? e.code);

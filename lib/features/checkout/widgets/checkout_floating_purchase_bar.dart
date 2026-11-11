@@ -46,7 +46,7 @@ class CheckoutFloatingPurchaseBar extends StatelessWidget {
                             child: Text(
                               busy
                                   ? 'Processing...'
-                                  : 'Complete Purchase • \$${total.toStringAsFixed(2)}',
+                                  : 'Place Order • \$${total.toStringAsFixed(2)}',
                               textAlign: TextAlign.center,
                               style: GoogleFonts.plusJakartaSans(
                                 fontWeight: FontWeight.w700,
