@@ -1,0 +1,12 @@
+abstract final class AppRoutes {
+  static const splash = '/';
+  static const login = '/login';
+  static const register = '/register';
+  static const home = '/home';
+  static const search = '/search';
+  static const productDetail = '/product';
+  static const orderConfirmation = '/order-confirmation';
+  static const checkout = '/checkout';
+  static const cart = '/cart';
+  static const profile = '/profile';
+}
