@@ -33,6 +33,9 @@ jobs:
       - name: Unit & widget tests
         run: flutter test --reporter expanded
 
+      - name: Compile web showcase (example configuration only)
+        run: flutter build web --dart-define-from-file=firebase.env.example.json
+
   firestore-rules:
     name: Firestore security rules (emulator)
     runs-on: ubuntu-latest
