@@ -51,7 +51,7 @@ class OrderConfirmationView extends GetView<OrderConfirmationController> {
                           children: [
                             const TextSpan(text: 'Your order '),
                             TextSpan(
-                              text: '#${c.orderId}',
+                              text: '#${c.shortOrderId}',
                               style: GoogleFonts.plusJakartaSans(
                                 fontWeight: FontWeight.w800,
                                 color: Colors.black87,
@@ -59,7 +59,7 @@ class OrderConfirmationView extends GetView<OrderConfirmationController> {
                             ),
                             const TextSpan(
                               text:
-                                  ' has been placed successfully. We\'ve sent a receipt to your email.',
+                                  ' has been received. No payment was collected in this demo.',
                             ),
                           ],
                         ),
@@ -67,7 +67,9 @@ class OrderConfirmationView extends GetView<OrderConfirmationController> {
                       const SizedBox(height: 28),
                       OrderConfirmationSummaryCard(controller: c),
                       const SizedBox(height: 24),
-                      const OrderConfirmationDeliverySection(),
+                      OrderConfirmationDeliverySection(
+                        address: c.shippingAddress,
+                      ),
                       const SizedBox(height: 28),
                       SizedBox(
                         width: double.infinity,

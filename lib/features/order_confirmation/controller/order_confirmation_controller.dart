@@ -17,6 +17,9 @@ class OrderLineUi {
 
 class OrderConfirmationController extends GetxController {
   String orderId = '';
+  Map<String, String> shippingAddress = {};
+  String get shortOrderId =>
+      orderId.length > 12 ? orderId.substring(0, 12) : orderId;
   double total = 0;
   double subtotal = 0;
   double shipping = 0;
@@ -28,6 +31,9 @@ class OrderConfirmationController extends GetxController {
   void onInit() {
     final a = Get.arguments;
     if (a is Map) {
+      if (a['shippingAddress'] is Map) {
+        shippingAddress = Map<String, String>.from(a['shippingAddress'] as Map);
+      }
       final id = a['orderId'];
       if (id is String) {
         orderId = id;

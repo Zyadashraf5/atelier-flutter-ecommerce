@@ -125,7 +125,7 @@ class CheckoutView extends GetView<CheckoutController> {
                         const SizedBox(height: 26),
                         const CheckoutSectionHeader(
                           icon: Icons.credit_card_rounded,
-                          title: 'PAYMENT METHOD',
+                          title: 'PAYMENT PREFERENCE',
                         ),
                         const SizedBox(height: 14),
                         Row(
@@ -153,7 +153,7 @@ class CheckoutView extends GetView<CheckoutController> {
                         CheckoutOrderSummarySection(checkout: c),
                         const SizedBox(height: 20),
                         ElevatedButton(
-                          onPressed: c.submitOrder,
+                          onPressed: c.submitting ? null : c.submitOrder,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF1B2B5B),
                             minimumSize: const Size(double.infinity, 56),
@@ -184,7 +184,7 @@ class CheckoutView extends GetView<CheckoutController> {
                         const SizedBox(height: 16),
                         Center(
                           child: Text(
-                            'SECURE ENCRYPTED CHECKOUT POWERED BY ATELIER PAY',
+                            'DEMO CHECKOUT · NO PAYMENT WILL BE COLLECTED',
                             textAlign: TextAlign.center,
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 10,

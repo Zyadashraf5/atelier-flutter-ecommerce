@@ -19,6 +19,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: '3.47.9'
           cache: true
 
       - name: Flutter version
@@ -28,7 +29,7 @@ jobs:
         run: flutter pub get
 
       - name: Static analysis
-        run: flutter analyze --no-fatal-infos
+        run: flutter analyze
 
       - name: Unit & widget tests
         run: flutter test --reporter expanded
@@ -54,10 +55,37 @@ jobs:
 
       - name: Install test dependencies
         working-directory: firestore-tests
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
-      - name: Run rules tests against the Firestore emulator
+      - name: Install trusted checkout dependencies
+        working-directory: functions
+        run: npm ci --no-audit --no-fund
+
+      - name: Trusted checkout unit tests
+        run: npm --prefix functions test
+
+      - name: Run security and transaction tests against emulators
         run: >-
           firestore-tests/node_modules/.bin/firebase emulators:exec
-          --only firestore --project demo-atelier
-          "npm --prefix firestore-tests test"
+          --only auth,firestore,functions --project demo-atelier
+          "npm --prefix functions run test:integration && npm --prefix firestore-tests test"
+
+  android:
+    name: Android debug compilation
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.9'
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Compile unsigned debug app with example configuration
+        run: flutter build apk --debug --dart-define-from-file=firebase.env.example.json

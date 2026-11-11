@@ -6,64 +6,46 @@ import 'package:mine_ecommerce/core/widgets/app_network_image.dart';
 
 class HomeHeroCard extends StatelessWidget {
   const HomeHeroCard({super.key, required this.onExplore});
-
   final VoidCallback onExplore;
 
   @override
   Widget build(BuildContext context) {
-    final w = MediaQuery.sizeOf(context).width;
-    final h = MediaQuery.sizeOf(context).height;
-    final cardHeight = (h * 0.24).clamp(168.0, w >= 600 ? 240.0 : 220.0);
     return Container(
-      height: cardHeight,
+      height: 220,
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: AppColors.heroBeige,
         borderRadius: BorderRadius.circular(24),
       ),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
+      child: Row(
         children: [
-          Positioned(
-            right: -20,
-            bottom: -10,
-            child: Opacity(
-              opacity: 0.85,
-              child: SizedBox(
-                width: 180,
-                height: 180,
-                child: AppNetworkImage(
-                  url: AppImages.heroWatch,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(24),
+          Expanded(
+            flex: 3,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'NEW COLLECTION',
+                  'THE ATELIER EDIT',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11,
+                    fontSize: 10,
                     fontWeight: FontWeight.w600,
-                    letterSpacing: 2,
-                    color: AppColors.textMuted,
+                    letterSpacing: 1.5,
+                    color: AppColors.textSecondary,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 Text(
-                  'Object of Pure Utility.',
+                  'Objects for everyday living.',
+                  maxLines: 3,
                   style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.w800,
                     fontSize: 22,
+                    height: 1.15,
                     color: AppColors.navy,
-                    height: 1.2,
                   ),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: onExplore,
                   style: ElevatedButton.styleFrom(
@@ -71,20 +53,25 @@ class HomeHeroCard extends StatelessWidget {
                     foregroundColor: Colors.white,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 22,
+                      horizontal: 18,
                       vertical: 12,
                     ),
                     shape: const StadiumBorder(),
                   ),
-                  child: Text(
-                    'Explore Modernism',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                    ),
-                  ),
+                  child: const Text('Explore'),
                 ),
               ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            flex: 2,
+            child: AspectRatio(
+              aspectRatio: 0.85,
+              child: AppNetworkImage(
+                url: AppImages.chair,
+                borderRadius: BorderRadius.circular(16),
+              ),
             ),
           ),
         ],

@@ -1,49 +1,26 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function signedIn() {
-      return request.auth != null;
-    }
-
-    // Catalog: anyone can read; signed-in users can create once (demo seeding,
-    // lock down for production).
+    function signedIn() { return request.auth != null; }
+    // Only trusted administrative tooling may maintain the catalog.
     match /categories/{docId} {
       allow read: if true;
-      allow create: if signedIn();
-      allow update, delete: if false;
+      allow write: if false;
     }
-
     match /products/{docId} {
       allow read: if true;
-      allow create: if signedIn();
-      allow update, delete: if false;
+      allow write: if false;
     }
-
     match /users/{userId} {
       allow read: if signedIn() && request.auth.uid == userId;
-      allow create, update: if signedIn() && request.auth.uid == userId;
+      allow create, update: if signedIn() && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly(['email', 'displayName', 'createdAt']);
       allow delete: if false;
     }
-
-    // An order must belong to the caller, start as "processing", carry at
-    // least one line, use the server time, and have consistent non-negative
-    // money fields (total = subtotal + tax, to the cent).
-    function validNewOrder(data) {
-      return data.userId == request.auth.uid
-          && data.status == 'processing'
-          && data.createdAt == request.time
-          && data.lines is list
-          && data.lines.size() > 0
-          && data.subtotal is number && data.subtotal >= 0
-          && data.tax is number && data.tax >= 0
-          && data.total is number
-          && math.abs(data.total - (data.subtotal + data.tax)) < 0.01;
-    }
-
+    // The callable atomically prices orders, reserves stock and creates orders.
     match /orders/{orderId} {
       allow read: if signedIn() && resource.data.userId == request.auth.uid;
-      allow create: if signedIn() && validNewOrder(request.resource.data);
-      allow update, delete: if false;
+      allow write: if false;
     }
   }
 }

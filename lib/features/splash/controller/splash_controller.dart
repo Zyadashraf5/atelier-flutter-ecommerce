@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:get/get.dart';
-import 'package:mine_ecommerce/data/firestore/firestore_seeder.dart';
 import 'package:mine_ecommerce/routes/app_routes.dart';
 
 class SplashController extends GetxController {
@@ -23,9 +22,6 @@ class SplashController extends GetxController {
       loggedIn =
           Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null;
     } catch (_) {}
-    if (loggedIn) {
-      await FirestoreSeeder.ensureCatalogReady();
-    }
     Get.offNamed(loggedIn ? AppRoutes.home : AppRoutes.login);
   }
 

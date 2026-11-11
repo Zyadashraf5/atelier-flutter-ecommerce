@@ -17,9 +17,6 @@ class AppNetworkImage extends StatelessWidget {
     final child = Image.network(
       url,
       fit: fit,
-      headers: const {
-        'User-Agent': 'Atelier/1.0 (Flutter; image loader)',
-      },
       loadingBuilder: (context, child, progress) {
         if (progress == null) return child;
         return const Center(
