@@ -6,6 +6,8 @@
 
 A shopping app for a small home-decor store: browse a live catalog, search, add pieces to a cart and place an order that is saved to Cloud Firestore. Built with Flutter, GetX and Firebase, with Firestore security rules that are tested against the emulator in CI.
 
+**Portfolio demo:** this is not a production payment or order-processing system. Catalog creation is open to signed-in users for demo seeding, and order prices still require authoritative server-side validation.
+
 ## What the app does
 
 | Screen | Behaviour |
@@ -34,7 +36,7 @@ lib/
 - **Feature-first GetX.** Each screen gets its own binding and controller; the cart is a permanent shared controller.
 - **Repositories wrap Firebase.** `AuthRepository`, `OrderRepository` and `UserProfileRepository` accept injected `FirebaseAuth` / `FirebaseFirestore` instances so they can be replaced in tests.
 - **One pricing rule set.** `OrderPricing` (`lib/core/pricing`) owns the tax rate, shipping and rounding to the cent. The cart, the checkout screen and the saved order all use it, so the amounts a customer sees are the amounts stored.
-- **Server-side checks in Firestore rules.** A new order must belong to the signed-in user, start as `processing`, contain at least one line, use the server timestamp and have `total = subtotal + tax` with non-negative amounts. Users can read only their own orders and profiles; catalog documents cannot be edited from the app.
+- **Server-side checks in Firestore rules.** A new order must belong to the signed-in user, start as `processing`, contain at least one line, use the server timestamp and have `total = subtotal + tax` with non-negative amounts. Users can read only their own orders and profiles. Existing catalog documents cannot be updated or deleted by the app, but any signed-in user can create new ones for demo seeding.
 
 ## Tech stack
 
@@ -53,9 +55,10 @@ flutter pub get
 ### Firebase setup
 
 1. Register the Android, iOS and/or Web apps in your Firebase project.
-2. Copy `firebase.env.example.json` to `firebase.env.json` (ignored by git) and fill in the values from the Firebase console.
-3. Android only: put your `google-services.json` in `android/app/` (ignored by git). The Google Services Gradle plugin is applied only when that file exists.
-4. Deploy the rules: `firebase deploy --only firestore:rules --project <your-project-id>`.
+2. Enable **Email/Password** under Firebase Authentication → Sign-in method.
+3. Copy `firebase.env.example.json` to `firebase.env.json` (ignored by git) and fill in the values from the Firebase console.
+4. Android only: put your `google-services.json` in `android/app/` (ignored by git). The Google Services Gradle plugin is applied only when that file exists.
+5. Deploy the rules: `firebase deploy --only firestore:rules --project <your-project-id>`.
 
 ### Run
 
