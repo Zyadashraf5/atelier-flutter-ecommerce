@@ -115,7 +115,7 @@ firestore-tests/node_modules/.bin/firebase emulators:exec --only auth,firestore,
 | Checkout integration · 8 tests | Real Firestore transactions, retries, concurrent stock contention, rollback, anonymous rejection and authenticated HTTP callable |
 | Firestore rules · 11 tests | Direct order writes denied, catalog create/update/delete denied, private orders and profiles, privileged profile fields denied |
 
-CI runs all suites, strict Flutter analysis and a release web compilation. No production Firebase project is needed for CI.
+CI runs all suites, strict Flutter analysis, release web compilation and Android debug compilation. No production Firebase project is needed for CI.
 
 ## Connecting your own Firebase project
 
@@ -129,7 +129,7 @@ Never deploy the demo project or use demo credentials in production. This reposi
 - Add reservation expiry/cancellation and corresponding stock release; current orders reserve stock immediately.
 - Configure App Check, operational quotas, monitoring and a reviewed tax/shipping policy for the target market.
 - Social sign-in and some profile-menu actions remain placeholders. Only the email/password authentication flow is implemented.
-- Android/iOS native builds and real-device behavior require their platform toolchains and your Firebase registrations.
+- Android debug compilation is verified in CI. iOS builds and native real-device behavior still require their platform toolchains and your Firebase registrations.
 - Demo photos are loaded from external Unsplash URLs; the app is not a fully offline storefront.
 
 ## Author
