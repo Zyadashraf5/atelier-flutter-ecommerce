@@ -129,6 +129,35 @@ class AtelierApp extends StatelessWidget {
       initialRoute: AppRoutes.splash,
       initialBinding: InitialBinding(),
       getPages: AppPages.routes,
+      builder: (context, child) {
+        if (!const bool.fromEnvironment('USE_FIREBASE_EMULATORS')) {
+          return child ?? const SizedBox.shrink();
+        }
+        return Column(
+          children: [
+            Expanded(child: child ?? const SizedBox.shrink()),
+            Material(
+              color: AppColors.navy,
+              child: SafeArea(
+                top: false,
+                child: SizedBox(
+                  height: 26,
+                  child: Center(
+                    child: Text(
+                      'Demo store · Sample data · No real payments',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
