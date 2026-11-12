@@ -141,13 +141,15 @@ class AtelierApp extends StatelessWidget {
               child: SafeArea(
                 top: false,
                 child: SizedBox(
-                  height: 26,
+                  height: 32,
                   child: Center(
                     child: Text(
                       'Demo store · Sample data · No real payments',
                       style: const TextStyle(
+                        inherit: false,
                         color: Colors.white,
                         fontSize: 11,
+                        height: 1.2,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
